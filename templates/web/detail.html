@@ -1,0 +1,94 @@
+{% extends 'web/public/layout.html' %}
+{% block app-page %}
+  <div class="survey-detail" id="{{ pk }}">
+    <div class="row">
+      <div class="col-xs-3">
+        <el-input v-model="uniqueCode" placeholder="请输入唯一码"></el-input>
+      </div>
+    </div>
+    <hr>
+    <div v-for="(survey, index) in surveys">
+      <div class="row">
+        <div class="col-xs-3">
+          <h4>{% templatetag openvariable %}survey.name{% templatetag closevariable %}</h4>
+        </div>
+      </div>
+      <hr>
+      <el-form ref="survey" :model="survey.questions" label-width="80px" label-position="top">
+        <el-form-item v-for="(form, index) in survey.questions" :label="form.name" :error="form.error">
+        <el-input v-if="form.answer_type == 'suggestion'" type="textarea" v-model="form.value"></el-input>
+        <el-radio-group v-model="form.value" v-if="form.answer_type == 'single'">
+          <el-radio v-for="(choice, index) in form.choices" :label="choice.points">
+            {% templatetag openvariable %}choice.content{% templatetag closevariable %}
+          </el-radio>
+        </el-radio-group>
+      </el-form-item>
+    </el-form>
+    </div>
+    <el-button type="success" @click="onSubmit">创建问卷调查</el-button>
+  </div>
+{% endblock %}
+{% block js %}
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        surveys: [],
+        forms: [],
+        uniqueCode: "",
+      },
+      mounted() {
+        this.initFormData()
+      },
+      computed: {},
+      methods: {
+        initFormData() {
+          let vm = this;
+          let pk = $("div.survey-detail").prop("id");
+          axios.get(`/api/surveys/${pk}/`).then(function (resp) {
+            vm.surveys = resp.data.surveys;
+          })
+        },
+        onSubmit() {
+          let data = this.getFormData();
+          let pk = $("div.survey-detail").prop("id");
+          let vm = this;
+          axios.post(
+            `/api/surveys/${pk}/`, {
+              "surveys": data,
+              "unique_code": this.uniqueCode,
+            }
+            ).then(function (resp) {
+            let res = resp.data;
+            if (res.errcode) {
+              alert("提交成功");
+              location.reload();
+            } else {
+
+              if (res.data.unique_code){
+                alert(res.data.unique_code.toString())
+              }
+
+              for (let i = 0; i < res.data.surveys.length; i++) {
+
+                let questions = res.data.surveys[i]["questions"];
+
+                for (let item = 0; item < questions.length; item++) {
+                  let errors = questions[item].value;
+                  if (errors) {
+                    vm.surveys[i]['questions'][item].error = errors.toString();
+                }else {
+                    vm.surveys[i]['questions'][item].error = ""
+                  }
+                }
+              }
+            }
+          })
+        },
+        getFormData() {
+          return this.surveys
+        }
+      }
+    })
+  </script>
+{% endblock %}
