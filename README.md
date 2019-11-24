@@ -1,8 +1,4 @@
-<div align="center">
-  <img src="http://47.94.172.250:33334/static/frontend/head_portrait/logo@2x.png?t=1542252961.100895" width="150px">
-  <br>
-  <strong>问卷调查系统</strong>
-</div>
+# 问卷调查系统
 
 # 开发环境
 
